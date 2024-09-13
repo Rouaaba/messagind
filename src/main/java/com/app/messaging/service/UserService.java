@@ -95,6 +95,8 @@ public class UserService {
     
 
     public Admin createAdmin(Admin admin) {
+        String encodedPassword = passwordEncoder.encode(admin.getPassword());
+        admin.setPassword(encodedPassword);
         return userRepo.save(admin);
     }
     

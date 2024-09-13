@@ -77,6 +77,7 @@ public class UserController {
         URI location = URI.create("/admins/" + createdAdmin.getId());
         return ResponseEntity.created(location).body(createdAdmin);
     }
+    
     @PostMapping("users/update")
     public ResponseEntity<User> updateUser(@RequestBody Map<String, Object> payload){
         Integer id=null;
@@ -140,13 +141,6 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
-   @GetMapping("/test-password")
-    public ResponseEntity<Boolean> testPassword(
-            @RequestParam String rawPassword,
-            @RequestParam String encodedPassword) {
-        boolean matches = passwordEncoder.matches(rawPassword, encodedPassword);
-        return ResponseEntity.ok(matches);
-    }
 
     @PostMapping("/encode-password")
     public ResponseEntity<String> encodePassword(@RequestParam String rawPassword) {
