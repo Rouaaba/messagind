@@ -8,11 +8,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.security.core.Authentication;
-import org.springframework.data.jpa.repository.JpaRepository;
 import com.app.messaging.domain.User;
-import java.util.Optional;
-
-import com.app.messaging.repo.UserProjection;
 import com.app.messaging.repo.UserRepo;
 import com.app.messaging.domain.Admin;
 import com.app.messaging.domain.NormalUser;
@@ -127,10 +123,10 @@ public class UserService {
     public User getCurrentAuthenticatedUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null) {
-            System.out.println("Authentication object: " + authentication); // Add this
+            System.out.println("Authentication object: " + authentication); // Debugging line
             if (authentication.getPrincipal() instanceof UserDetails) {
                 UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-                System.out.println("Authenticated user: " + userDetails.getUsername()); // Add this
+                System.out.println("Authenticated user: " + userDetails.getUsername()); // Debugging line
                 return userRepo.findByUsername(userDetails.getUsername())
                     .orElseThrow(() -> new RuntimeException("User not found"));
             }
@@ -138,7 +134,7 @@ public class UserService {
         throw new RuntimeException("No authenticated user found");
     }
     
-/*    public String encodePassword(String rawPassword) {
+    public String encodePassword(String rawPassword) {
         return passwordEncoder.encode(rawPassword);
     }
 
@@ -146,7 +142,7 @@ public class UserService {
     public boolean checkPassword(String rawPassword, String encodedPassword) {
         return passwordEncoder.matches(rawPassword, encodedPassword);
     }
- */
+
 
     
 

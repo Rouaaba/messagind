@@ -1,18 +1,17 @@
 package com.app.messaging.controller;
 
 import java.net.URI;
-import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.el.stream.Optional;
-import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,13 +20,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import java.util.Map;
 import com.app.messaging.service.UserService;
 import com.app.messaging.domain.Admin;
 import com.app.messaging.domain.NormalUser;
 import com.app.messaging.domain.User;
-import com.app.messaging.repo.UserProjection;
-import com.app.messaging.config.SecurityConfig;
 
 
 @RestController
@@ -35,12 +31,13 @@ import com.app.messaging.config.SecurityConfig;
 public class UserController {
 
     private final UserService userService;
-    private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+
 
     @Autowired
-    public UserController(UserService userService, PasswordEncoder passwordEncoder) {
+    public UserController(UserService userService,  AuthenticationManager authenticationManager) {
         this.userService = userService;
-        this.passwordEncoder = passwordEncoder;
+        this.authenticationManager= authenticationManager;
     }
 
 
@@ -60,10 +57,17 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error creating user");
         }
     }
-    @GetMapping("login")
-    public String login() {
-        // Return the view name for login, ensure it's not causing a redirect loop
-        return "login";
+
+    @PostMapping("login")
+    public ResponseEntity<String> login(@RequestParam String username, @RequestParam String password) {
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(username, password));
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            return ResponseEntity.ok("Login successful");
+        } catch (BadCredentialsException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+        }
     }
 
 
@@ -100,11 +104,20 @@ public class UserController {
         return ResponseEntity.ok(updatedUser);
     }
 
-    @GetMapping("user/current")
+    @GetMapping("/user/current")
     public ResponseEntity<User> getCurrentUser() {
-        User currentUser = userService.getCurrentAuthenticatedUser();
-        return ResponseEntity.ok(currentUser);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        
+        if (authentication != null && authentication.isAuthenticated()) {
+            User currentUser = userService.getCurrentAuthenticatedUser();
+            return ResponseEntity.ok(currentUser);
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
     }
+
+
+
 
     @PostMapping("/logout")
     public ResponseEntity<String> logout() {
@@ -127,8 +140,7 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
-
- /*   @GetMapping("/test-password")
+   @GetMapping("/test-password")
     public ResponseEntity<Boolean> testPassword(
             @RequestParam String rawPassword,
             @RequestParam String encodedPassword) {
@@ -152,7 +164,7 @@ public class UserController {
         return ResponseEntity.ok(isMatch);
     }
 
- */
+
 
 }
 
