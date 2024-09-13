@@ -25,7 +25,8 @@ public abstract class User {
     @Id
     @Column(unique = true, updatable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    int id;
-    String username;
-    String email;
+    private int id;
+    private String username;
+    private String email;
+    private String password;
 }
