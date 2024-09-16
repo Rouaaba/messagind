@@ -27,38 +27,47 @@ import com.app.messaging.service.UserService;
         @Autowired
         private MessageService messageService;  // To save messages
 
-        @PostMapping("/send")
-        public ResponseEntity<String> sendMessage(@RequestBody MessageRequest messageRequest) {
-            // Get the current logged-in user (the sender)
-            User sender = userService.getCurrentAuthenticatedUser();  // Fetch current user (already logged in)
+    @PostMapping("/send")
+    public ResponseEntity<String> sendMessage(@RequestBody MessageRequest messageRequest) {
+        // Get the current logged-in user (the sender)
+        User sender = userService.getCurrentAuthenticatedUser();
 
-            // Find the recipient by email or username
-            User recipient = userService.findByEmailOrUsername(messageRequest.getRecipient());
-            if (recipient == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Recipient not found");
-            }
-
-            // Create a new Message entity
-            Message message = new Message();
-            message.setSenderId(sender.getId());
-            message.setRecipientId(recipient.getId());
-            message.setContent(messageRequest.getContent());
-
-            // Save the message
-            messageService.save(message);
-
-            return ResponseEntity.ok("Message sent successfully");
+        // Find the recipient by email or username
+        User recipient = userService.findByEmailOrUsername(messageRequest.getRecipient());
+        if (recipient == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Recipient not found");
         }
 
-        @GetMapping("/history")
-        public ResponseEntity<List<Message>> getMessageHistory(@RequestParam("email") String email) {
-            User sender = userService.getCurrentAuthenticatedUser();
-            User recipient = userService.findByEmailOrUsername(email);
-            if (recipient == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-            }
+        // Create a new Message entity
+        Message message = new Message();
+        message.setSenderId(sender.getId());
+        message.setRecipientId(recipient.getId());
+        message.setContent(messageRequest.getContent());
 
-            List<Message> messages = messageService.getMessagesBetweenUsers(sender.getId(), recipient.getId());
-            return ResponseEntity.ok(messages);
+        // Save the message
+        messageService.save(message);
+
+        return ResponseEntity.ok("Message sent successfully");
+    }
+
+
+    @GetMapping("/history")
+    public ResponseEntity<List<Message>> getMessageHistory(@RequestParam("email") String email) {
+        User sender = userService.getCurrentAuthenticatedUser();
+        User recipient = userService.findByEmailOrUsername(email);
+        if (recipient == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
+
+        System.out.println("Fetching messages between user ID " + sender.getId() + " and user ID " + recipient.getId());
+        List<Message> messages = messageService.getMessagesBetweenUsers(sender.getId(), recipient.getId());
+        System.out.println("Number of messages found: " + messages.size());
+        messages.forEach(message -> System.out.println("Message: " + message.getContent()));
+
+        // Log retrieved messages
+        messages.forEach(message -> System.out.println("Message: " + message.getContent()));
+
+        return ResponseEntity.ok(messages);
+    }
+
 }
