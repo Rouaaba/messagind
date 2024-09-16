@@ -1,34 +1,40 @@
 package com.app.messaging.domain;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
-import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Inheritance;
-import jakarta.persistence.InheritanceType;
+import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Entity
-@Setter
 @Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@Table(name = "user")
-@DiscriminatorColumn(name = "dtype")
-public abstract class User {
+@Entity
+@Table(name = "message")
+public class Message {
     @Id
-    @Column(unique = true, updatable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
-    private String username;
-    private String email;
-    private String password;
+
+    @Column(name = "sender_id")
+    private int senderId;
+
+    @Column(name = "recipient_id")
+    private int recipientId;
+
+    @Column(name = "content")
+    private String content;
+
+    @Column(name = "timestamp")
+    private LocalDateTime timestamp;
 }

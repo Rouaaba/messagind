@@ -1,6 +1,7 @@
 package com.app.messaging.controller;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.security.authentication.AuthenticationManager;
@@ -20,8 +21,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.app.messaging.service.MessageService;
 import com.app.messaging.service.UserService;
 import com.app.messaging.domain.Admin;
+import com.app.messaging.domain.Message;
+import com.app.messaging.domain.MessageRequest;
 import com.app.messaging.domain.NormalUser;
 import com.app.messaging.domain.User;
 
@@ -79,7 +84,7 @@ public class UserController {
     }
     
 
-    
+
     @PostMapping("users/update")
     public ResponseEntity<User> updateUser(@RequestBody Map<String, Object> payload){
         Integer id=null;
@@ -119,9 +124,6 @@ public class UserController {
         }
     }
 
-
-
-
     @PostMapping("/logout")
     public ResponseEntity<String> logout() {
         org.springframework.security.core.Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -146,7 +148,6 @@ public class UserController {
 
     @PostMapping("/encode-password")
     public ResponseEntity<String> encodePassword(@RequestParam String rawPassword) {
-        // Encode the password and return it
         String encodedPassword = userService.encodePassword(rawPassword);
         return ResponseEntity.ok(encodedPassword);
     }
@@ -160,7 +161,13 @@ public class UserController {
         return ResponseEntity.ok(isMatch);
     }
 
+    
 
+        @GetMapping("normal-users")
+        public ResponseEntity<List<Map<String, Object>>> getNormalUsersPublicInfo() {
+            List<Map<String, Object>> normalUsers = userService.getNormalUsersPublicInfo();
+            return ResponseEntity.ok(normalUsers);
+        }
 
 }
 

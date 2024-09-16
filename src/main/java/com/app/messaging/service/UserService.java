@@ -1,5 +1,10 @@
 package com.app.messaging.service;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -145,8 +150,26 @@ public class UserService {
         return passwordEncoder.matches(rawPassword, encodedPassword);
     }
 
-
+    public User findByEmailOrUsername(String recipient) {
+        return userRepo.findByEmail(recipient)
+                .orElse(userRepo.findByUsername(recipient)
+                .orElse(null));
+    }
     
+    public List<NormalUser> getAllNormalUsers() {
+        return userRepo.findAllNormalUsers();
+    }
+
+    public List<Map<String, Object>> getNormalUsersPublicInfo() {
+        List<NormalUser> normalUsers = getAllNormalUsers();
+        return normalUsers.stream().map(user -> {
+            Map<String, Object> userInfo = new HashMap<>();
+            userInfo.put("id", user.getId());
+            userInfo.put("username", user.getUsername());
+            userInfo.put("email", user.getEmail());
+            return userInfo;
+        }).collect(Collectors.toList());
+    }
 
 }
 
