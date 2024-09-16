@@ -45,6 +45,7 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
                 .requestMatchers("/user/current").authenticated() // Requires authentication
                 .requestMatchers("/admin/create").permitAll() // Only admins can create admins
                 .requestMatchers("/messages").authenticated()
+                .requestMatchers("/messages/conversation").authenticated()
                 .requestMatchers("/normal-users").authenticated()
                 .anyRequest().permitAll() // Default to authenticated
         )

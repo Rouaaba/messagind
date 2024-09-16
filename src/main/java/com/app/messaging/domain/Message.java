@@ -8,7 +8,10 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -20,21 +23,29 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "message")
 public class Message {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
-
-    @Column(name = "sender_id")
-    private int senderId;
-
-    @Column(name = "recipient_id")
-    private int recipientId;
-
-    @Column(name = "content")
+    private Integer id;
+    
+    private Integer senderId;
+    private Integer recipientId;
     private String content;
-
-    @Column(name = "timestamp")
+    
+    @Column(updatable = false)
     private LocalDateTime timestamp;
+    
+    @ManyToOne
+    @JoinColumn(name = "senderId", insertable = false, updatable = false)
+    private User sender;
+    
+    @ManyToOne
+    @JoinColumn(name = "recipientId", insertable = false, updatable = false)
+    private User recipient;
+    
+    @PrePersist
+    protected void onCreate() {
+        this.timestamp = LocalDateTime.now();
+    }
 }
+

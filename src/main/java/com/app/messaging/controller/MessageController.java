@@ -1,6 +1,9 @@
 package com.app.messaging.controller;
 
+import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -19,37 +22,32 @@ import com.app.messaging.service.MessageService;
 import com.app.messaging.service.UserService;
 
 @RestController
-    @RequestMapping("messages")
-    public class MessageController {
+@RequestMapping("messages")
+public class MessageController {
 
-        @Autowired
-        private UserService userService;  // To retrieve users
-        @Autowired
-        private MessageService messageService;  // To save messages
+    @Autowired
+    private UserService userService;
+    
+    @Autowired
+    private MessageService messageService;
 
     @PostMapping("/send")
     public ResponseEntity<String> sendMessage(@RequestBody MessageRequest messageRequest) {
-        // Get the current logged-in user (the sender)
         User sender = userService.getCurrentAuthenticatedUser();
-
-        // Find the recipient by email or username
         User recipient = userService.findByEmailOrUsername(messageRequest.getRecipient());
         if (recipient == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Recipient not found");
         }
 
-        // Create a new Message entity
         Message message = new Message();
         message.setSenderId(sender.getId());
         message.setRecipientId(recipient.getId());
         message.setContent(messageRequest.getContent());
 
-        // Save the message
         messageService.save(message);
 
         return ResponseEntity.ok("Message sent successfully");
     }
-
 
     @GetMapping("/history")
     public ResponseEntity<List<Message>> getMessageHistory(@RequestParam("email") String email) {
@@ -59,15 +57,44 @@ import com.app.messaging.service.UserService;
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
 
-        System.out.println("Fetching messages between user ID " + sender.getId() + " and user ID " + recipient.getId());
         List<Message> messages = messageService.getMessagesBetweenUsers(sender.getId(), recipient.getId());
-        System.out.println("Number of messages found: " + messages.size());
-        messages.forEach(message -> System.out.println("Message: " + message.getContent()));
-
-        // Log retrieved messages
-        messages.forEach(message -> System.out.println("Message: " + message.getContent()));
-
         return ResponseEntity.ok(messages);
     }
 
+    @GetMapping("/conversation")
+public ResponseEntity<List<String>> getConversation(@RequestParam("email") String email) {
+    try {
+        User sender = userService.getCurrentAuthenticatedUser();
+        User recipient = userService.findByEmailOrUsername(email);
+        
+        if (recipient == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+
+        if (sender == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        }
+
+        List<Message> messages = messageService.getMessagesBetweenUsers(sender.getId(), recipient.getId());
+
+        if (messages == null) {
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
+        }
+
+        List<String> formattedMessages = messages.stream()
+            .sorted(Comparator.comparing(message -> message.getTimestamp() != null ? message.getTimestamp() : LocalDateTime.MIN))
+            .map(message -> {
+                String senderUsername = message.getSender() != null ? message.getSender().getUsername() : "Unknown";
+                String content = message.getContent() != null ? message.getContent() : "No content";
+                return senderUsername + ": " + content;
+            })
+            .collect(Collectors.toList());
+
+        return ResponseEntity.ok(formattedMessages);
+    } catch (Exception e) {
+        e.printStackTrace(); // Log the exception for debugging
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+    }
+
+}
 }
