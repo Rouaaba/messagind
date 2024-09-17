@@ -10,7 +10,7 @@ import lombok.Setter;
 @Setter
 @Getter
 @Entity
-@DiscriminatorValue("NormalUser")
+@DiscriminatorValue("NormalUser") 
 public class NormalUser extends User {
     
 }

@@ -20,6 +20,7 @@ import com.app.messaging.domain.MessageRequest;
 import com.app.messaging.domain.User;
 import com.app.messaging.service.MessageService;
 import com.app.messaging.service.UserService;
+import com.app.messaging.domain.MessageRequest; // Adjust the package if necessary
 
 @RestController
 @RequestMapping("messages")
@@ -35,6 +36,7 @@ public class MessageController {
     public ResponseEntity<String> sendMessage(@RequestBody MessageRequest messageRequest) {
         User sender = userService.getCurrentAuthenticatedUser();
         User recipient = userService.findByEmailOrUsername(messageRequest.getRecipient());
+
         if (recipient == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Recipient not found");
         }
@@ -49,6 +51,7 @@ public class MessageController {
         return ResponseEntity.ok("Message sent successfully");
     }
 
+
     @GetMapping("/history")
     public ResponseEntity<List<Message>> getMessageHistory(@RequestParam("email") String email) {
         User sender = userService.getCurrentAuthenticatedUser();
@@ -62,39 +65,43 @@ public class MessageController {
     }
 
     @GetMapping("/conversation")
-public ResponseEntity<List<String>> getConversation(@RequestParam("email") String email) {
-    try {
-        User sender = userService.getCurrentAuthenticatedUser();
-        User recipient = userService.findByEmailOrUsername(email);
-        
-        if (recipient == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+    public ResponseEntity<List<String>> getConversation(@RequestParam("email") String email) {
+        try {
+            User sender = userService.getCurrentAuthenticatedUser();
+            User recipient = userService.findByEmailOrUsername(email);
+
+            if (recipient == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            }
+
+            if (sender == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+            }
+
+            List<Message> messages = messageService.getMessagesBetweenUsers(sender.getId(), recipient.getId());
+
+            if (messages == null || messages.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
+            }
+
+            List<String> formattedMessages = messages.stream()
+                .sorted(Comparator.comparing(Message::getTimestamp, Comparator.nullsLast(Comparator.naturalOrder())))
+                .map(message -> {
+                    String senderUsername = message.getSender() != null ? message.getSender().getUsername() : "Unknown";
+                    String content = message.getContent() != null ? message.getContent() : "No content";
+                    LocalDateTime timestamp = message.getTimestamp();
+                    String formattedTimestamp = (timestamp != null) ? timestamp.toString() : "No timestamp";
+
+                    return senderUsername + ": " + content + " (" + formattedTimestamp + ")";
+                })
+                .collect(Collectors.toList());
+
+            return ResponseEntity.ok(formattedMessages);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
-
-        if (sender == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
-        }
-
-        List<Message> messages = messageService.getMessagesBetweenUsers(sender.getId(), recipient.getId());
-
-        if (messages == null) {
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
-        }
-
-        List<String> formattedMessages = messages.stream()
-            .sorted(Comparator.comparing(message -> message.getTimestamp() != null ? message.getTimestamp() : LocalDateTime.MIN))
-            .map(message -> {
-                String senderUsername = message.getSender() != null ? message.getSender().getUsername() : "Unknown";
-                String content = message.getContent() != null ? message.getContent() : "No content";
-                return senderUsername + ": " + content;
-            })
-            .collect(Collectors.toList());
-
-        return ResponseEntity.ok(formattedMessages);
-    } catch (Exception e) {
-        e.printStackTrace(); // Log the exception for debugging
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
     }
 
-}
+
 }

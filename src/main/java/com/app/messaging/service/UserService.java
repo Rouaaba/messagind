@@ -4,12 +4,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.security.core.Authentication;
@@ -30,7 +35,7 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
     }
     public Page<User> getAllUsers(int page, int size) {
-        // Retrieve the currently authenticated user
+
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
@@ -56,8 +61,6 @@ public class UserService {
     public User getUserById(int id){
         return userRepo.findById(id).orElseThrow(() -> new RuntimeException("User not found with id: " + id));
     }
-    
-
 
     //admin deletes an account
     public void deleteUserById(int id) {
@@ -105,7 +108,6 @@ public class UserService {
         return userRepo.save(admin);
     }
     
-    
 
     // admin creates a normal user
     public NormalUser createUser(NormalUser newUser) {
@@ -113,7 +115,6 @@ public class UserService {
         newUser.setPassword(passwordEncoder.encode(newUser.getPassword()));
         return userRepo.save(newUser);
     }
-
     
     // update infos based on id (either admin or normal user)
     public User updateUser(int id, String input){
@@ -126,11 +127,10 @@ public class UserService {
         return userRepo.save(user);
     }
 
-
     public User getCurrentAuthenticatedUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null) {
-            System.out.println("Authentication object: " + authentication); // Debugging line
+            System.out.println("Authentication object: " + authentication);
             if (authentication.getPrincipal() instanceof UserDetails) {
                 UserDetails userDetails = (UserDetails) authentication.getPrincipal();
                 System.out.println("Authenticated user: " + userDetails.getUsername()); // Debugging line
@@ -169,6 +169,31 @@ public class UserService {
             userInfo.put("email", user.getEmail());
             return userInfo;
         }).collect(Collectors.toList());
+    }
+
+    public Map<String, List<User>> categorizeUsersByRole() {
+        List<User> allUsers = userRepo.findAll();
+        Map<String, List<User>> categorizedUsers = new HashMap<>();
+        List<User> adminUsers = new ArrayList<>();
+        List<User> normalUsers = new ArrayList<>();
+        
+        for (User user : allUsers) {
+            if (user instanceof Admin) {
+                adminUsers.add(user);
+            } else if (user instanceof NormalUser) {
+                normalUsers.add(user);
+            }
+        }
+        categorizedUsers.put("admins", adminUsers);
+        categorizedUsers.put("normalUsers", normalUsers);
+
+        return categorizedUsers;
+    }
+
+    // You can also add a function to get a user by email or username
+    public User findUserByUsernameOrEmail(String usernameOrEmail) {
+        return userRepo.findByEmail(usernameOrEmail)
+            .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 
 }
