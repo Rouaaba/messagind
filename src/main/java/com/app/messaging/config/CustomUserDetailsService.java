@@ -13,12 +13,13 @@ import com.app.messaging.repo.UserRepo;
 public class CustomUserDetailsService implements UserDetailsService {
 
     @Autowired
-    private UserRepo userRepo; // Repository or service to access user data
+    private UserRepo userRepo;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepo.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         return new CustomUserDetails(user);
     }
 }
+

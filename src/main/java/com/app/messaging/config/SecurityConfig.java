@@ -55,7 +55,7 @@ public class SecurityConfig {
                     .requestMatchers("/messages/conversation").authenticated()
                     .requestMatchers("/normal-users").authenticated()
                     .requestMatchers("/user-dashboard").authenticated()
-                    .requestMatchers("/admin-dashboard").authenticated()
+                    .requestMatchers("/admin/dashboard").hasRole("ADMIN")
                     .anyRequest().permitAll() // Default to permit all other requests
             )
             .formLogin(formLogin ->

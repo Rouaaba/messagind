@@ -83,17 +83,18 @@ public class UserController {
 
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
+        // Log the authorities
+        System.out.println("Authorities: " + userDetails.getAuthorities());
+
         // Extract the role from the authorities
         String role = userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .findFirst()
-                .orElse("ROLE_USER"); // Default role
+                .orElse("ROLE_USER"); // Default role if none found
 
         // Include role in the response
         return ResponseEntity.ok(new AuthResponse(role, true)); // Ensure this matches the frontend expectation
     }
-
-
 
 
 
@@ -160,11 +161,12 @@ public ResponseEntity<User> getCurrentUser() {
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("delete/current")
+    @DeleteMapping("/delete/current")
     public ResponseEntity<Void> deleteCurrentUser(@RequestParam String username, @RequestParam String password) {
         userService.deleteCurrentUser(username, password);
         return ResponseEntity.noContent().build();
     }
+
 
 
 
@@ -191,15 +193,16 @@ public ResponseEntity<User> getCurrentUser() {
             return ResponseEntity.ok(normalUsers);
         }
 
-    @GetMapping("/admin/dashboard")
-    public String adminDashboard() {
-        return "admin-dashboard"; // View name for admin dashboard
-    }
-    
-    @GetMapping("/user-dashboard")
-    public String userDashboard() {
-        return "user-dashboard"; // This should be the name of your Thymeleaf template or JSP page
-    }
+    @GetMapping("admin/dashboard")
+    public ResponseEntity<String> adminDashboard() {
+            return ResponseEntity.ok("Admin Dashboard"); // Simple string response
+        }
+        
+        
+    @GetMapping("user/dashboard")
+    public ResponseEntity<String> userDashboard() {
+                return ResponseEntity.ok("User Dashboard"); // Simple string response
+            }
 
 }
 

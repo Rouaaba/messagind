@@ -22,17 +22,21 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
-                                        Authentication authentication) throws IOException {
-        // Extract user details and role
-        String role = authentication.getAuthorities().stream()
-                .map(grantedAuthority -> grantedAuthority.getAuthority())
-                .findFirst()
-                .orElse("ROLE_USER");
+                                        Authentication authentication) throws IOException, ServletException {
+        String targetUrl = determineTargetUrl(authentication);
 
-        // Define redirect URL based on role
-        String redirectUrl = role.equals("ROLE_ADMIN") ? "/admin-dashboard" : "/user-dashboard";
+        // Redirect to the target URL
+        response.sendRedirect(targetUrl);
+    }
 
-        // Perform redirection
-        response.sendRedirect(redirectUrl);
+    private String determineTargetUrl(Authentication authentication) {
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
+
+        if (isAdmin) {
+            return "/admin/dashboard"; // Redirect to admin dashboard
+        } else {
+            return "/user/dashboard"; // Redirect to user home or other default page
+        }
     }
 }
