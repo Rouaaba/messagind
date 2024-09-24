@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/messaging
+    url: jdbc:postgresql://localhost:5432/users
     username: postgresuser
     password: securepassword
   jpa:
@@ -24,7 +24,7 @@ spring:
     async:
       request-timeout: 3600000
 server:
-  port: 8080
+  port: 8081
   error:
     path: /user/error
     whitelabel:

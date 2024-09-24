@@ -3,7 +3,6 @@ package com.app.messaging.config;
 import java.util.Arrays;
 import java.util.Collections;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -19,29 +18,25 @@ import org.springframework.security.web.authentication.logout.LogoutSuccessHandl
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import jakarta.servlet.http.HttpServletResponse;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Autowired
     private final UserDetailsService userDetailsService;
-
 
     public SecurityConfig(UserDetailsService userDetailsService) {
         this.userDetailsService = userDetailsService;
     }
 
-    @SuppressWarnings("deprecation")
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf().disable() // Disable CSRF protection if necessary
+            .cors().and() // Enable CORS support
             .authorizeRequests(authorizeRequests ->
                 authorizeRequests
                     .requestMatchers("/login").permitAll() // Public login endpoint
@@ -49,14 +44,14 @@ public class SecurityConfig {
                     .requestMatchers("/validate-password").permitAll()
                     .requestMatchers("/check-password").permitAll()
                     .requestMatchers("/encode-password").permitAll()
-                    .requestMatchers("/user/current").authenticated() // Requires authentication
-                    .requestMatchers("/admin/create").permitAll() // Only admins can create admins
+                    .requestMatchers("/user/current").authenticated()
                     .requestMatchers("/messages").authenticated()
                     .requestMatchers("/messages/conversation").authenticated()
                     .requestMatchers("/normal-users").authenticated()
-                    .requestMatchers("/user-dashboard").authenticated()
+                    .requestMatchers("/user/dashboard").authenticated()
+                    .requestMatchers("/admin/create").hasRole("ADMIN") // Only admins can create admins
                     .requestMatchers("/admin/dashboard").hasRole("ADMIN")
-                    .anyRequest().permitAll() // Default to permit all other requests
+                    .anyRequest().permitAll()
             )
             .formLogin(formLogin ->
                 formLogin
@@ -81,6 +76,7 @@ public class SecurityConfig {
 
         return http.build();
     }
+
 
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {

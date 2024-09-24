@@ -26,14 +26,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import com.app.messaging.service.MessageService;
 import com.app.messaging.service.UserService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import com.app.messaging.domain.AuthResponse;
 import com.app.messaging.domain.Admin;
-import com.app.messaging.domain.Message;
-import com.app.messaging.domain.MessageRequest;
 import com.app.messaging.domain.NormalUser;
 import com.app.messaging.domain.User;
 import org.slf4j.Logger;
@@ -79,6 +76,8 @@ public class UserController {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(username, password)
         );
+        System.out.println("Username: " + username);
+        System.out.println("Password: " + password);
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();

@@ -25,9 +25,18 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
                                         Authentication authentication) throws IOException, ServletException {
         String targetUrl = determineTargetUrl(authentication);
 
-        // Redirect to the target URL
-        response.sendRedirect(targetUrl);
+        // Set response type to JSON
+        response.setContentType("application/json");
+        response.setStatus(HttpServletResponse.SC_OK);
+
+        // Create a JSON object for the redirect URL
+        String json = "{\"redirectUrl\": \"" + (targetUrl.equals("/admin/dashboard") ? "Admin Dashboard" : "User Dashboard") + "\"}";
+
+        // Write the JSON response
+        response.getWriter().write(json);
+        response.getWriter().flush();
     }
+
 
     private String determineTargetUrl(Authentication authentication) {
         boolean isAdmin = authentication.getAuthorities().stream()
@@ -39,4 +48,5 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
             return "/user/dashboard"; // Redirect to user home or other default page
         }
     }
+
 }
