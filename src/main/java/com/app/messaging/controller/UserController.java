@@ -16,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,6 +27,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import com.app.messaging.config.JwtGeneratorImpl;
+import com.app.messaging.config.JwtGeneratorInterface;
+
 import com.app.messaging.service.UserService;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,6 +37,8 @@ import com.app.messaging.domain.AuthResponse;
 import com.app.messaging.domain.Admin;
 import com.app.messaging.domain.NormalUser;
 import com.app.messaging.domain.User;
+
+import org.apache.el.stream.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,17 +49,29 @@ public class UserController {
 
     private final UserService userService;
     private final AuthenticationManager authenticationManager;
+    private final JwtGeneratorImpl jwtGenerator;
     private static final Logger log = LoggerFactory.getLogger(UserController.class);
 
 
 
     @Autowired
-    public UserController(UserService userService,  AuthenticationManager authenticationManager) {
+    public UserController(UserService userService,  AuthenticationManager authenticationManager, JwtGeneratorImpl jwtGenerator) {
         this.userService = userService;
         this.authenticationManager= authenticationManager;
+        this.jwtGenerator=jwtGenerator;
     }
 
+    @GetMapping("/users/find")
+    public ResponseEntity<User> findUserByUsernameOrEmail(@RequestParam String usernameOrEmail) {
+        try {
+            User user = userService.findUserByUsernameOrEmail(usernameOrEmail);
+            return ResponseEntity.ok(user);
+        } catch (UsernameNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+    }
 
+    
     @GetMapping("users/all")
     public Page<User> getAllUsers(@RequestParam int page, @RequestParam int size) {
         return userService.getAllUsers(page, size);
@@ -73,27 +91,39 @@ public class UserController {
 
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@RequestParam String username, @RequestParam String password) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(username, password)
-        );
-        System.out.println("Username: " + username);
-        System.out.println("Password: " + password);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-
-        // Log the authorities
-        System.out.println("Authorities: " + userDetails.getAuthorities());
-
-        // Extract the role from the authorities
-        String role = userDetails.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .findFirst()
-                .orElse("ROLE_USER"); // Default role if none found
-
-        // Include role in the response
-        return ResponseEntity.ok(new AuthResponse(role, true)); // Ensure this matches the frontend expectation
+        try {
+            // Authenticate the user
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(username, password)
+            );
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+    
+            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+    
+            // Log the authorities
+            System.out.println("Username: " + username);
+            System.out.println("Password: " + password);
+            System.out.println("Authorities: " + userDetails.getAuthorities());
+    
+            // Extract the role from the authorities
+            String role = userDetails.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .findFirst()
+                    .orElse("ROLE_USER"); // Default role if none found
+    
+            // Generate JWT token using the JwtGeneratorInterface
+           // Map<String, String> tokenMap = jwtGenerator.generateToken(authentication);
+    
+            // Return role and token in the response
+            return ResponseEntity.ok(new AuthResponse(role, true));
+        } catch (BadCredentialsException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+        }
     }
+    
+
+
+
 
 
 

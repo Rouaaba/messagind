@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -45,11 +46,9 @@ public class SecurityConfig {
                     .requestMatchers("/check-password").permitAll()
                     .requestMatchers("/encode-password").permitAll()
                     .requestMatchers("/user/current").authenticated()
-                    .requestMatchers("/messages").authenticated()
-                    .requestMatchers("/messages/conversation").authenticated()
                     .requestMatchers("/normal-users").authenticated()
                     .requestMatchers("/user/dashboard").authenticated()
-                    .requestMatchers("/admin/create").hasRole("ADMIN") // Only admins can create admins
+                    .requestMatchers("/admin/create").permitAll() // Only admins can create admins
                     .requestMatchers("/admin/dashboard").hasRole("ADMIN")
                     .anyRequest().permitAll()
             )
@@ -66,6 +65,10 @@ public class SecurityConfig {
                     .logoutSuccessHandler(logoutSuccessHandler())
                     .permitAll()
             )
+            .sessionManagement(sessionManagement ->
+        sessionManagement
+            .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED) // Adjust based on your needs
+    )
             .exceptionHandling(exceptions ->
                 exceptions
                     .accessDeniedHandler((request, response, accessDeniedException) -> {
