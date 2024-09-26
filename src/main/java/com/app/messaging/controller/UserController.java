@@ -27,13 +27,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import com.app.messaging.config.JwtGeneratorImpl;
-import com.app.messaging.config.JwtGeneratorInterface;
-
 import com.app.messaging.service.UserService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import com.app.messaging.domain.AuthResponse;
+import com.app.messaging.config.JwtGenerator;
 import com.app.messaging.domain.Admin;
 import com.app.messaging.domain.NormalUser;
 import com.app.messaging.domain.User;
@@ -49,16 +47,17 @@ public class UserController {
 
     private final UserService userService;
     private final AuthenticationManager authenticationManager;
-    private final JwtGeneratorImpl jwtGenerator;
+
+    private JwtGenerator jwtGenerator;
     private static final Logger log = LoggerFactory.getLogger(UserController.class);
 
 
 
     @Autowired
-    public UserController(UserService userService,  AuthenticationManager authenticationManager, JwtGeneratorImpl jwtGenerator) {
+    public UserController(UserService userService,  AuthenticationManager authenticationManager, JwtGenerator jwtGenerator) {
         this.userService = userService;
         this.authenticationManager= authenticationManager;
-        this.jwtGenerator=jwtGenerator;
+        this.jwtGenerator= jwtGenerator;
     }
 
     @GetMapping("/users/find")
@@ -113,18 +112,14 @@ public class UserController {
     
             // Generate JWT token using the JwtGeneratorInterface
            // Map<String, String> tokenMap = jwtGenerator.generateToken(authentication);
+           String token = jwtGenerator.generateToken(authentication);
     
             // Return role and token in the response
-            return ResponseEntity.ok(new AuthResponse(role, true));
+            return ResponseEntity.ok(new AuthResponse(role, true, token));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
         }
     }
-    
-
-
-
-
 
 
     @PostMapping("/admin/create")
@@ -234,4 +229,3 @@ public ResponseEntity<User> getCurrentUser() {
             }
 
 }
-

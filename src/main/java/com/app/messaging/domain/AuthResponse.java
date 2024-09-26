@@ -9,8 +9,15 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public
-class AuthResponse {
+public class AuthResponse {
     private String role;
     private boolean success;
+    private String accessToken;
+    private String tokenType="Bearer";
+
+    public AuthResponse( String role, Boolean success, String accessToken){
+        this.role=role;
+        this.success=success;
+        this.accessToken=accessToken;
+    }
 }

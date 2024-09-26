@@ -32,14 +32,8 @@ server:
 
 logging:
   level:
-    root: DEBUG
     org.springframework.security: DEBUG
-    org.springframework.web: DEBUG
-    org.hibernate: DEBUG
-    org.springframework.data.jpa: DEBUG
+    org.apache.tomcat: DEBUG
+ 
 
-jwt:
-  secret: achatapp
-app:
-  jwttoken:
-    message: this is the token
+
